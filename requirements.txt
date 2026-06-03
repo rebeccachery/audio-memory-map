@@ -1,0 +1,12 @@
+gradio
+folium
+python-dotenv
+streamlit
+streamlit-folium
+fastapi
+uvicorn
+python-multipart
+requests
+boto3
+psycopg2-binary
+numpy
