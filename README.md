@@ -1,4 +1,12 @@
 # Audio Memory Map 
+![Status](https://img.shields.io/badge/status-active-brightgreen)
+![Stage](https://img.shields.io/badge/stage-full--stack%20prototype-orange)
+![Architecture](https://img.shields.io/badge/architecture-Streamlit%20%E2%86%92%20FastAPI-blue)
+![Feature](https://img.shields.io/badge/feature-interactive%20audio%20map-teal)
+![Data](https://img.shields.io/badge/data-transcripts%20%2B%20coordinates-green)
+![Storage](https://img.shields.io/badge/storage-unified%20engine-purple)
+![Mode](https://img.shields.io/badge/mode-local%20or%20cloud-yellow)
+![Infra](https://img.shields.io/badge/infra-S3%20%2B%20pgvector-0ea5e9)
 
 A spatial audio mapping application that allows users to record or upload voice memories, attach them to geographic coordinates, transcribe them, and visualize them on an interactive map.
 
