@@ -1,11 +1,16 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import Depends, FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
 import io
 
+from backend.models import RegionCreate, RegionResponse, SignalCreate, SignalFilters, SignalResponse
 from backend.storage import get_storage_client
 
-app = FastAPI(title="Audio Memory Map API")
+app = FastAPI(
+    title="Disaster Audio Map API",
+    description="Voice-first, location-aware community signal network API.",
+    version="0.2.0",
+)
 
 # Configure CORS
 app.add_middleware(
@@ -25,6 +30,29 @@ def home():
 @app.get("/health")
 def health():
     return {"status": "healthy"}
+
+
+@app.post("/signals/validate", response_model=SignalResponse, tags=["signals"])
+def validate_signal(payload: SignalCreate):
+    """Validate signal payload and return the expected response shape."""
+    return SignalResponse.from_create(
+        payload,
+        audio_ref="preview.wav",
+        transcript_original=payload.transcript or "",
+    )
+
+
+@app.post("/regions/validate", response_model=RegionResponse, tags=["regions"])
+def validate_region(payload: RegionCreate):
+    """Validate region payload and return the expected response shape."""
+    return RegionResponse.from_create(payload)
+
+
+@app.get("/signals/filters", response_model=SignalFilters, tags=["signals"])
+def signal_filters(filters: SignalFilters = Depends()):
+    """Validate list/filter query parameters for signal queries."""
+    return filters
+
 
 @app.post("/memories")
 async def create_memory(
