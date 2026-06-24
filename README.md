@@ -29,7 +29,11 @@ FastAPI Backend (Port 8000)
 ```
 ├── backend/
 │   ├── main.py             # FastAPI application and route definitions
+│   ├── models/             # Pydantic schemas (signals, regions)
+│   ├── db/                 # SQL migrations and migrate runner
 │   └── storage.py          # Unified Local/Cloud Storage controller
+├── docker-compose.yml      # Local Postgres + PostGIS for cloud dev
+├── Makefile                # db-up, migrate, and smoke-test helpers
 ├── frontend/
 │   └── streamlit_app.py    # Streamlit dashboard and interactive folium map
 ├── data/                   # Local database directory (JSON)
@@ -52,8 +56,11 @@ Create a virtual environment and install the required libraries:
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
+
+Install is much faster when `pip` is up to date (older pip may try to compile `pyarrow` from source). The main app only needs Streamlit and FastAPI — `gradio` is optional for legacy prototypes in `requirements-legacy.txt`.
 
 ### 3. Environment Configurations
 Configure your storage choices. Copy the example configuration template:
@@ -63,6 +70,38 @@ cp .env.example .env
 By default, the application runs in `LOCAL` mode, using local files and JSON directories. 
 
 To use cloud storage, set `STORAGE_TYPE=CLOUD` in your `.env` and fill out your **AWS S3** and **PostgreSQL** credentials.
+
+### Cloud mode local dev
+
+Run PostgreSQL with PostGIS locally via Docker before using `STORAGE_TYPE=CLOUD`:
+
+```bash
+# Start Postgres + PostGIS
+make db-up
+
+# Wait until ready, then apply SQL migrations
+make migrate
+```
+
+This uses the `postgis/postgis:15-3.4` image defined in `docker-compose.yml` and applies files from `backend/db/migrations/` in order. Set in your `.env`:
+
+```bash
+STORAGE_TYPE=CLOUD
+POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/disaster_signals
+```
+
+Useful commands:
+
+| Command | Purpose |
+|---------|---------|
+| `make db-up` | Start the database container |
+| `make db-down` | Stop containers |
+| `make db-logs` | Tail database logs |
+| `make db-ready` | Check Postgres health |
+| `make migrate` | Apply pending SQL migrations |
+| `make db-smoke` | Start DB, migrate, verify PostGIS |
+
+Migration tracking uses a `schema_migrations` table so each `.sql` file runs once. Install dev dependencies first: `pip install -r requirements-dev.txt`.
 
 ### 4. Running the App
 
