@@ -1,21 +1,13 @@
 #!/usr/bin/env python3
 """Apply SQL migrations from backend/db/migrations/ in lexicographic order."""
 
-import os
 import sys
 from pathlib import Path
 
-import psycopg2
+from backend.db.connection import get_db_connection
 
 
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
-
-
-def get_connection():
-    db_url = os.getenv("POSTGRES_URL")
-    if not db_url:
-        raise RuntimeError("POSTGRES_URL is not set")
-    return psycopg2.connect(db_url)
 
 
 def ensure_migrations_table(cursor) -> None:
@@ -48,7 +40,7 @@ def run_migrations() -> int:
         print("No migration files found.")
         return 0
 
-    conn = get_connection()
+    conn = get_db_connection()
     conn.autocommit = False
     try:
         with conn.cursor() as cursor:
