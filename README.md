@@ -103,6 +103,15 @@ Useful commands:
 
 Migration tracking uses a `schema_migrations` table so each `.sql` file runs once. Install dev dependencies first: `pip install -r requirements-dev.txt`.
 
+Current migrations:
+
+| File | Purpose |
+|------|---------|
+| `001_init_postgis.sql` | Enable `uuid-ossp` and PostGIS extensions |
+| `002_signals_and_regions.sql` | Create `regions` and `signals` tables with indexes |
+
+Run migrations before using `STORAGE_TYPE=CLOUD` with the new signal schema. Legacy `/memories` cloud writes still target the old `memories` table and will be replaced in P0-3.
+
 ### 4. Running the App
 
 Run the FastAPI backend:
