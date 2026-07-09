@@ -78,7 +78,7 @@ st.markdown("""
             background: linear-gradient(90deg, #ffae00, #ff7b00);
         }
     </style>
-""", unsafe_allowed_html=True)
+""", unsafe_allow_html=True)
 
 # App Header
 st.markdown("""
@@ -86,7 +86,7 @@ st.markdown("""
         <div class="header-title">🗺️ Audio Memory Map</div>
         <div class="header-subtitle">Drop raw audio memories onto geographic coordinates and relive your moments visually.</div>
     </div>
-""", unsafe_allowed_html=True)
+""", unsafe_allow_html=True)
 
 # Fetch memories from API helper
 def fetch_memories():
