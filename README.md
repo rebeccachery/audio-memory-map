@@ -101,7 +101,14 @@ Useful commands:
 | `make migrate` | Apply pending SQL migrations (`python -m backend.db`) |
 | `make db-smoke` | Start DB, migrate, verify PostGIS |
 
-Migration tracking uses a `schema_migrations` table so each `.sql` file runs once. Install dev dependencies first: `pip install -r requirements-dev.txt`.
+Migration tracking uses a `schema_migrations` table so each `.sql` file runs once.
+
+Install dev dependencies before migrating:
+
+```bash
+make setup-dev
+# or: ./venv/bin/pip install -r requirements-dev.txt
+```
 
 Current migrations:
 

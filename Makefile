@@ -3,7 +3,17 @@ PYTHON ?= ./venv/bin/python
 # Project root must be on PYTHONPATH so `backend` imports resolve
 export PYTHONPATH := $(CURDIR)
 
-.PHONY: db-up db-down db-logs db-ready migrate db-smoke
+.PHONY: setup-dev check-dev-deps db-up db-down db-logs db-ready migrate db-smoke
+
+setup-dev:
+	$(PYTHON) -m pip install -r requirements-dev.txt
+
+check-dev-deps:
+	@$(PYTHON) -c "import psycopg2" 2>/dev/null || \
+		(echo "Missing psycopg2. Install dev dependencies with:" && \
+		 echo "  make setup-dev" && \
+		 echo "or: ./venv/bin/pip install -r requirements-dev.txt" && \
+		 exit 1)
 
 db-up:
 	docker compose up -d db
@@ -17,7 +27,7 @@ db-logs:
 db-ready:
 	docker compose exec db pg_isready -U postgres -d disaster_signals
 
-migrate:
+migrate: check-dev-deps
 	POSTGRES_URL=$(POSTGRES_URL) $(PYTHON) -m backend.db
 
 db-smoke: db-up
