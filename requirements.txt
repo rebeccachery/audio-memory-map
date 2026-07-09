@@ -1,12 +1,17 @@
-gradio
-folium
-python-dotenv
-streamlit
-streamlit-folium
-fastapi
-uvicorn
-python-multipart
-requests
-boto3
-psycopg2-binary
-numpy
+# Core app (Streamlit frontend + FastAPI backend)
+folium>=0.15,<0.21
+python-dotenv>=1.0,<2
+streamlit>=1.28,<2
+streamlit-folium>=0.18,<1
+fastapi>=0.100,<1
+uvicorn[standard]>=0.23,<1
+python-multipart>=0.0.6,<1
+requests>=2.31,<3
+
+# Streamlit depends on pyarrow; pin below 18 so pip uses prebuilt wheels
+# instead of compiling from source (which can take minutes and fail).
+pyarrow>=7.0,<18
+
+# Optional cloud storage (uncomment when STORAGE_TYPE=CLOUD)
+# boto3>=1.28,<2
+# psycopg2-binary>=2.9,<3

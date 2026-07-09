@@ -78,7 +78,7 @@ st.markdown("""
             background: linear-gradient(90deg, #ffae00, #ff7b00);
         }
     </style>
-""", unsafe_allowed_html=True)
+""", unsafe_allow_html=True)
 
 # App Header
 st.markdown("""
@@ -86,7 +86,7 @@ st.markdown("""
         <div class="header-title">🗺️ Audio Memory Map</div>
         <div class="header-subtitle">Drop raw audio memories onto geographic coordinates and relive your moments visually.</div>
     </div>
-""", unsafe_allowed_html=True)
+""", unsafe_allow_html=True)
 
 # Fetch memories from API helper
 def fetch_memories():
@@ -116,17 +116,63 @@ def upload_memory(title, lat, lon, transcript, audio_file):
     except Exception as e:
         return False, str(e)
 
-# Sidebar Form for Adding Memories
+DEFAULT_LAT, DEFAULT_LON = 40.7128, -73.9352
+
+if "pinned_lat" not in st.session_state:
+    st.session_state.pinned_lat = DEFAULT_LAT
+if "pinned_lon" not in st.session_state:
+    st.session_state.pinned_lon = DEFAULT_LON
+if "pin_mode" not in st.session_state:
+    st.session_state.pin_mode = True
+if "manual_coords" not in st.session_state:
+    st.session_state.manual_coords = False
+
+# Sidebar for Adding Memories
 st.sidebar.markdown("### 🎙️ Add Memory")
+
+st.sidebar.markdown("#### 📍 Location")
+st.session_state.pin_mode = st.sidebar.toggle(
+    "Pin on map",
+    value=st.session_state.pin_mode,
+    help="When on, click anywhere on the map to set this memory's location.",
+)
+st.session_state.manual_coords = st.sidebar.toggle(
+    "Enter coordinates manually",
+    value=st.session_state.manual_coords,
+    help="Show latitude and longitude fields instead of clicking the map.",
+)
+
+if st.session_state.manual_coords:
+    st.session_state.pinned_lat = st.sidebar.number_input(
+        "Latitude",
+        format="%.6f",
+        value=float(st.session_state.pinned_lat),
+    )
+    st.session_state.pinned_lon = st.sidebar.number_input(
+        "Longitude",
+        format="%.6f",
+        value=float(st.session_state.pinned_lon),
+    )
+else:
+    if st.session_state.pin_mode:
+        st.sidebar.info("Click the map to drop a pin for this memory.")
+    else:
+        st.sidebar.caption("Turn on **Pin on map** to choose a location by clicking.")
+    st.sidebar.markdown(
+        f"**Pinned location:** {st.session_state.pinned_lat:.5f}, {st.session_state.pinned_lon:.5f}"
+    )
+    if st.sidebar.button("Reset pin", use_container_width=True):
+        st.session_state.pinned_lat = DEFAULT_LAT
+        st.session_state.pinned_lon = DEFAULT_LON
+        st.rerun()
+
 with st.sidebar.form("memory_form", clear_on_submit=True):
     title = st.text_input("Memory Title", placeholder="E.g., Rain in Central Park")
-    lat = st.number_input("Latitude", format="%.6f", value=40.7128)
-    lon = st.number_input("Longitude", format="%.6f", value=-73.9352)
     transcript = st.text_area("Transcript / Notes (Optional)", placeholder="What happened here?")
     audio_file = st.file_uploader("Upload Audio (WAV or MP3)", type=["wav", "mp3"])
-    
+
     submitted = st.form_submit_button("Save Memory")
-    
+
     if submitted:
         if not title:
             st.sidebar.error("Title is required.")
@@ -134,10 +180,15 @@ with st.sidebar.form("memory_form", clear_on_submit=True):
             st.sidebar.error("Please upload an audio file.")
         else:
             with st.spinner("Uploading memory..."):
-                success, res = upload_memory(title, lat, lon, transcript, audio_file)
+                success, res = upload_memory(
+                    title,
+                    st.session_state.pinned_lat,
+                    st.session_state.pinned_lon,
+                    transcript,
+                    audio_file,
+                )
                 if success:
                     st.sidebar.success("Memory saved successfully!")
-                    # Refresh the page using experimental rerun
                     st.rerun()
                 else:
                     st.sidebar.error(f"Failed to save memory: {res}")
@@ -149,7 +200,9 @@ memories = fetch_memories()
 
 with col_map:
     st.subheader("Interactive Memory Map")
-    
+    if st.session_state.pin_mode and not st.session_state.manual_coords:
+        st.caption("Click the map to pin where this memory happened.")
+
     # Initialize Folium map
     # Center map on average coords or default NYC
     if memories:
@@ -157,7 +210,14 @@ with col_map:
         avg_lon = sum(m['lon'] for m in memories) / len(memories)
         m = folium.Map(location=[avg_lat, avg_lon], zoom_start=12)
     else:
-        m = folium.Map(location=[40.7128, -73.9352], zoom_start=12)
+        m = folium.Map(location=[DEFAULT_LAT, DEFAULT_LON], zoom_start=12)
+
+    # Show the pending pin for the memory being created
+    folium.Marker(
+        [st.session_state.pinned_lat, st.session_state.pinned_lon],
+        tooltip="New memory location",
+        icon=folium.Icon(color="red", icon="map-pin", prefix="fa"),
+    ).add_to(m)
 
     # Add markers
     for memory in memories:
@@ -175,7 +235,7 @@ with col_map:
             </audio>
         </div>
         """
-        
+
         folium.Marker(
             [memory["lat"], memory["lon"]],
             popup=folium.Popup(popup_html, max_width=300),
@@ -183,8 +243,29 @@ with col_map:
             icon=folium.Icon(color="orange", icon="volume-up", prefix="fa")
         ).add_to(m)
 
-    # Render map
-    st_folium(m, width="100%", height=500, key="memory_map")
+    # Render map and capture clicks when pin mode is active
+    map_data = st_folium(
+        m,
+        width="100%",
+        height=500,
+        key="memory_map",
+        returned_objects=["last_clicked"],
+    )
+
+    if (
+        st.session_state.pin_mode
+        and not st.session_state.manual_coords
+        and map_data
+        and map_data.get("last_clicked")
+    ):
+        clicked = map_data["last_clicked"]
+        if (
+            abs(clicked["lat"] - st.session_state.pinned_lat) > 1e-6
+            or abs(clicked["lng"] - st.session_state.pinned_lon) > 1e-6
+        ):
+            st.session_state.pinned_lat = clicked["lat"]
+            st.session_state.pinned_lon = clicked["lng"]
+            st.rerun()
 
 with col_details:
     st.subheader("Saved Memories")
@@ -195,7 +276,7 @@ with col_details:
             audio_url = f"{BACKEND_URL}/memories/{memory['audio_ref']}/audio"
             with st.container(border=True):
                 st.markdown(f"**{memory['title']}**")
-                st.caption(f"Coordinates: {memory['lat']:.5f}, {memory['lon']:.5f}")
+                st.caption(f"📍 {memory['lat']:.5f}, {memory['lon']:.5f}")
                 if memory.get('transcript'):
                     st.write(memory['transcript'])
                 # Audio player using URL stream

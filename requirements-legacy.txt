@@ -1,0 +1,3 @@
+# Optional: legacy Gradio prototypes (app.py, audio_memory_map_prototype.py)
+-r requirements.txt
+gradio>=4.0,<5

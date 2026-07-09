@@ -49,12 +49,12 @@ FastAPI Backend (Port 8000)
 ## Quick Start
 
 ### 1. Prerequisites
-Ensure you have Python 3.9+ installed on your machine.
+Use **Python 3.10+** (3.12 recommended). Streamlit does not support Python **3.9.7** specifically — if `pip install` fails with “No matching distribution found for streamlit”, recreate the venv with a newer Python (e.g. `python3.12 -m venv venv`).
 
 ### 2. Setup Dependencies
 Create a virtual environment and install the required libraries:
 ```bash
-python -m venv venv
+python3.12 -m venv venv   # or another 3.10+ interpreter; avoid 3.9.7
 source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 python -m pip install --upgrade pip
 pip install -r requirements.txt
