@@ -87,7 +87,7 @@ This uses the `postgis/postgis:15-3.4` image defined in `docker-compose.yml` and
 
 ```bash
 STORAGE_TYPE=CLOUD
-POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/disaster_signals
+POSTGRES_URL=postgresql://postgres:postgres@127.0.0.1:5432/disaster_signals
 ```
 
 Useful commands:

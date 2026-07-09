@@ -1,9 +1,9 @@
-POSTGRES_URL ?= postgresql://postgres:postgres@localhost:5432/disaster_signals
+POSTGRES_URL ?= postgresql://postgres:postgres@127.0.0.1:5432/disaster_signals
 PYTHON ?= ./venv/bin/python
 # Project root must be on PYTHONPATH so `backend` imports resolve
 export PYTHONPATH := $(CURDIR)
 
-.PHONY: setup-dev check-dev-deps db-up db-down db-logs db-ready migrate db-smoke
+.PHONY: setup-dev check-dev-deps db-up db-down db-logs db-ready db-wait migrate db-smoke
 
 setup-dev:
 	$(PYTHON) -m pip install -r requirements-dev.txt
@@ -27,7 +27,26 @@ db-logs:
 db-ready:
 	docker compose exec db pg_isready -U postgres -d disaster_signals
 
-migrate: check-dev-deps
+db-wait:
+	@POSTGRES_URL=$(POSTGRES_URL) $(PYTHON) -c "import os, sys, time; \
+import psycopg2; \
+url = os.environ['POSTGRES_URL']; \
+\
+for attempt in range(1, 11): \
+    try: \
+        psycopg2.connect(url).close(); \
+        print('Postgres is ready.'); \
+        sys.exit(0); \
+    except psycopg2.OperationalError: \
+        if attempt == 10: \
+            print('Cannot connect to Postgres at', url, file=sys.stderr); \
+            print('Try: make db-up', file=sys.stderr); \
+            print('Then wait a few seconds and run: make db-ready', file=sys.stderr); \
+            sys.exit(1); \
+        print(f'Waiting for Postgres ({attempt}/10)...'); \
+        time.sleep(2)"
+
+migrate: check-dev-deps db-wait
 	POSTGRES_URL=$(POSTGRES_URL) $(PYTHON) -m backend.db
 
 db-smoke: db-up
