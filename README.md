@@ -98,7 +98,7 @@ Useful commands:
 | `make db-down` | Stop containers |
 | `make db-logs` | Tail database logs |
 | `make db-ready` | Check Postgres health |
-| `make migrate` | Apply pending SQL migrations |
+| `make migrate` | Apply pending SQL migrations (`python -m backend.db`) |
 | `make db-smoke` | Start DB, migrate, verify PostGIS |
 
 Migration tracking uses a `schema_migrations` table so each `.sql` file runs once. Install dev dependencies first: `pip install -r requirements-dev.txt`.
