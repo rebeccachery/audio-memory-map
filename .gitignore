@@ -1,0 +1,26 @@
+# Secrets / local env
+.env
+.env.local
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Local runtime data (keep structure via .gitkeep if needed)
+uploads/*
+!uploads/.gitkeep
+*.bak
