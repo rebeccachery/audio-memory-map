@@ -132,26 +132,13 @@ class CloudStorage(BaseStorage):
             print("Warning: PostgreSQL config missing, falling back to local JSON database.")
             return self.fallback.save_memory(title, lat, lon, audio_ref, transcript, embedding)
         
-        import psycopg2
         from psycopg2.extras import RealDictCursor
-        
-        conn = psycopg2.connect(self.db_url)
+
+        from backend.db.connection import get_db_connection
+
+        conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        
-        # Ensure table exists
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS memories (
-                id UUID PRIMARY KEY,
-                title TEXT NOT NULL,
-                lat DOUBLE PRECISION NOT NULL,
-                lon DOUBLE PRECISION NOT NULL,
-                audio_ref TEXT NOT NULL,
-                transcript TEXT,
-                embedding DOUBLE PRECISION[]
-            );
-        """)
-        conn.commit()
-        
+
         memory_id = str(uuid.uuid4())
         cur.execute("""
             INSERT INTO memories (id, title, lat, lon, audio_ref, transcript, embedding)
@@ -170,12 +157,13 @@ class CloudStorage(BaseStorage):
         if not self.has_db:
             return self.fallback.list_memories()
             
-        import psycopg2
         from psycopg2.extras import RealDictCursor
-        
-        conn = psycopg2.connect(self.db_url)
+
+        from backend.db.connection import get_db_connection
+
+        conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        
+
         try:
             cur.execute("SELECT id, title, lat, lon, audio_ref, transcript, embedding FROM memories;")
             memories = cur.fetchall()

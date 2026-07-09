@@ -49,12 +49,12 @@ FastAPI Backend (Port 8000)
 ## Quick Start
 
 ### 1. Prerequisites
-Ensure you have Python 3.9+ installed on your machine.
+Use **Python 3.10+** (3.12 recommended). Streamlit does not support Python **3.9.7** specifically — if `pip install` fails with “No matching distribution found for streamlit”, recreate the venv with a newer Python (e.g. `python3.12 -m venv venv`).
 
 ### 2. Setup Dependencies
 Create a virtual environment and install the required libraries:
 ```bash
-python -m venv venv
+python3.12 -m venv venv   # or another 3.10+ interpreter; avoid 3.9.7
 source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 python -m pip install --upgrade pip
 pip install -r requirements.txt
@@ -87,7 +87,7 @@ This uses the `postgis/postgis:15-3.4` image defined in `docker-compose.yml` and
 
 ```bash
 STORAGE_TYPE=CLOUD
-POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/disaster_signals
+POSTGRES_URL=postgresql://postgres:postgres@127.0.0.1:5432/disaster_signals
 ```
 
 Useful commands:
@@ -98,10 +98,26 @@ Useful commands:
 | `make db-down` | Stop containers |
 | `make db-logs` | Tail database logs |
 | `make db-ready` | Check Postgres health |
-| `make migrate` | Apply pending SQL migrations |
+| `make migrate` | Apply pending SQL migrations (`python -m backend.db`) |
 | `make db-smoke` | Start DB, migrate, verify PostGIS |
 
-Migration tracking uses a `schema_migrations` table so each `.sql` file runs once. Install dev dependencies first: `pip install -r requirements-dev.txt`.
+Migration tracking uses a `schema_migrations` table so each `.sql` file runs once.
+
+Install dev dependencies before migrating:
+
+```bash
+make setup-dev
+# or: ./venv/bin/pip install -r requirements-dev.txt
+```
+
+Current migrations:
+
+| File | Purpose |
+|------|---------|
+| `001_init_postgis.sql` | Enable `uuid-ossp` and PostGIS extensions |
+| `002_signals_and_regions.sql` | Create `regions` and `signals` tables with indexes |
+
+Run migrations before using `STORAGE_TYPE=CLOUD` with the new signal schema. Legacy `/memories` cloud writes still target the old `memories` table and will be replaced in P0-3.
 
 ### 4. Running the App
 
