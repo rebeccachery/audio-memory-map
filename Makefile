@@ -27,24 +27,8 @@ db-logs:
 db-ready:
 	docker compose exec db pg_isready -U postgres -d disaster_signals
 
-db-wait:
-	@POSTGRES_URL=$(POSTGRES_URL) $(PYTHON) -c "import os, sys, time; \
-import psycopg2; \
-url = os.environ['POSTGRES_URL']; \
-\
-for attempt in range(1, 11): \
-    try: \
-        psycopg2.connect(url).close(); \
-        print('Postgres is ready.'); \
-        sys.exit(0); \
-    except psycopg2.OperationalError: \
-        if attempt == 10: \
-            print('Cannot connect to Postgres at', url, file=sys.stderr); \
-            print('Try: make db-up', file=sys.stderr); \
-            print('Then wait a few seconds and run: make db-ready', file=sys.stderr); \
-            sys.exit(1); \
-        print(f'Waiting for Postgres ({attempt}/10)...'); \
-        time.sleep(2)"
+db-wait: check-dev-deps
+	POSTGRES_URL=$(POSTGRES_URL) $(PYTHON) -m backend.db.wait_for_db
 
 migrate: check-dev-deps db-wait
 	POSTGRES_URL=$(POSTGRES_URL) $(PYTHON) -m backend.db
